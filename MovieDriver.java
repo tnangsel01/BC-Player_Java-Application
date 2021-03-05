@@ -32,7 +32,7 @@ public class MovieDriver {
     }
 
     //This method will return true if a movie is created.
-    //Written by Vianney Pham
+    //Written by: Vianney Pham
     public static boolean createMovie() {
 
         try {
