@@ -135,15 +135,82 @@ public class MovieDriver {
     }
 
     //This method will update a movie
-    //Written by Raju
-    public void updateMovie(int movie_id, String title, String native_name) {
- //raju will create this 
-    }
+    //Written by Raju & Sapana
+    
+ public static void updateMovie()
+	{
+        try{	
+			Connection allConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omdb", "root", "");
+			Statement allStmt = allConn.createStatement();
+			ResultSet allsql = allStmt.executeQuery("SELECT * FROM movies, movie_data WHERE movies.movie_id = movie_data.movie_id");
+                        System.out.println("------------ ");
+                Scanner upd= new Scanner(System.in);
+                System.out.println("UPDATE MOVIE ");
+                System.out.println("------------ ");
+                //Request movie id from user for update movie data function  
+                System.out.println("Enter movie ID to UPDATE a movie data- ");  
+                int movie_id= upd.nextInt();  
+                upd.nextLine();
+               
+                System.out.println("Enter new English name- ");  
+                String  english_name = upd.nextLine();   
+                
+                System.out.println("Enter new Native- ");  
+                String  native_name = upd.nextLine();  
+                
+                System.out.println("Enter new year made- ");  
+                int  year_made= upd.nextInt();  
+                        
+                        allStmt.executeUpdate(String.format("UPDATE movies SET native_name='%s', english_name='%s', year_made=%d WHERE movie_id=%d",native_name,english_name,year_made, movie_id));
+//           
+        }
+		catch (Exception exc)
+		{
+			exc.printStackTrace();
+		}
+	}
+   
 
     public static void main(String[] args)
        {
-           //createMovie();
+           
+           
+           //
            //readMovie();
            //deleteMovie();
+          
+        
+        //Request user to enter Movie ID and new data for update movie written by Raju and Sapana
+                Scanner sc= new Scanner(System.in);  
+                System.out.println("ENTER ONE OF THE FOLLOWING ");
+                System.out.println("1. Create Movie ");
+                System.out.println("2. Read Movie ");
+                System.out.println("3. Update Movie ");
+                System.out.println("4. Delete Movie ");
+                int menu =sc.nextInt();
+                
+                if (menu==1)
+                {
+                    createMovie();
+                }
+                else if (menu==2)
+                {
+                    readMovie();
+                }
+                else if (menu==3)
+                {
+                
+        
+                //calling update movie
+                updateMovie();
+                }
+                
+                else if (menu==4)
+                {
+                    deleteMovie();
+                }
+              
+               
+                
        }
     }
