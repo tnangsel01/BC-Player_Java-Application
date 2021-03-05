@@ -136,7 +136,7 @@ public class MovieDriver {
 
     //This method will update a movie
     //Written by Raju & Sapana
-    public void updateMovie(int movie_id, String title, String native_name) {
+    
  public static void updateMovie(int movie_id, String native_name, String english_name, int year_made)
 	{
         try{	
