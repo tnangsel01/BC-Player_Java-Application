@@ -159,7 +159,7 @@ public class MovieDriver {
            //readMovie();
            //deleteMovie();
         
-        //Input ID and new data for update movie written by Raju and Sapana
+        //Request user to enter Movie ID and new data for update movie written by Raju and Sapana
                 Scanner sc= new Scanner(System.in);  
                 
                 
