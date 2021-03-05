@@ -135,9 +135,22 @@ public class MovieDriver {
     }
 
     //This method will update a movie
-    //Written by Raju
+    //Written by Raju & Sapana
     public void updateMovie(int movie_id, String title, String native_name) {
- //raju will create this 
+ public static void updateMovie(int movie_id, String native_name, String english_name, int year_made)
+	{
+        try{	
+			Connection allConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omdb", "root", "");
+			Statement allStmt = allConn.createStatement();
+			ResultSet allsql = allStmt.executeQuery("SELECT * FROM movies, movie_data WHERE movies.movie_id = movie_data.movie_id");
+                        allStmt.executeUpdate(String.format("UPDATE movies SET native_name='%s', english_name='%s', year_made=%d WHERE movie_id=%d",native_name,english_name,year_made, movie_id));
+//           
+        }
+		catch (Exception exc)
+		{
+			exc.printStackTrace();
+		}
+	}
     }
 
     public static void main(String[] args)
@@ -145,5 +158,26 @@ public class MovieDriver {
            //createMovie();
            //readMovie();
            //deleteMovie();
+        
+        //Input ID and new data for update movie written by Raju and Sapana
+                Scanner sc= new Scanner(System.in);  
+                
+                
+                //Request movie id from user for update movie data function  
+                System.out.println("Enter movie ID to UPDATE a movie data- ");  
+                int id= sc.nextInt();  
+                sc.nextLine();
+               
+                System.out.println("Enter new English name- ");  
+                String  englishname = sc.nextLine();   
+                
+                System.out.println("Enter new Native- ");  
+                String  nativename = sc.nextLine();  
+                
+                System.out.println("Enter new year made- ");  
+                int  yearmade= sc.nextInt();  
+        
+                //calling update movie
+                updateMovie(id,englishname,nativename,yearmade);
        }
     }
