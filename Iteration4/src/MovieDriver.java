@@ -7,9 +7,10 @@ import java.sql.Statement;
 
 public class MovieDriver {
 
-	public boolean processMovieSong(){
+	public static void main(String[] args) {
+		Connection allConn = null;
 		try{ 	
-			Connection allConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omdb", "root", "");
+			allConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omdb", "root", "");
 
 			/*
 			 * 
@@ -44,15 +45,10 @@ It ignores the creation of the movie in "movies" table.
 			if (movieSql.next()) {
 				nextMovie_id = movieSql.getInt(1) + 1;
 			}
-//			PreparedStatement mstmt = allConn.prepareStatement("INSERT INTO movies(native_name, year_made) SELECT DISTINCT native_name, year_made FROM ms_test_data WHERE NOT EXISTS (SELECT 1 FROM movies WHERE native_name = ms_test_data.native_name and year_made = ms_test_data.year_made)");		
-//			int moviesCreated = mstmt.executeUpdate();
 			
-//			if(moviesCreated > 0){
-//				update execution_status to 'M created';
-//			}else{
-//				update execution_status to 'M ignored' ;
-//			}
-			
+			PreparedStatement mstmt = allConn.prepareStatement("INSERT INTO movies(native_name, year_made) SELECT DISTINCT native_name, year_made FROM ms_test_data WHERE NOT EXISTS (SELECT 1 FROM movies WHERE native_name = ms_test_data.native_name and year_made = ms_test_data.year_made)");		
+			int movieCreated = mstmt.executeUpdate();
+
 			
 /*
 * 
@@ -65,7 +61,6 @@ Case 4:
 It ignore the creation of an entry into "songs" table
 *
 */
-			
 
 			// Creating a statement to find the next index for the movie
 			Statement songStmt = allConn.createStatement();
@@ -73,19 +68,15 @@ It ignore the creation of an entry into "songs" table
 			// 3. Sql Query for the movie index of new movie
 			ResultSet songSql = songStmt.executeQuery("SELECT max(song_id) FROM songs");
 
-			// assign the next movie ID to nextmovie_id variable
+			// assign the next movie ID to nextmovie_id variable	
 			int nextSong_id = 0;
 			if (songSql.next()) {
 				nextSong_id = songSql.getInt(1) + 1;
 			}
-//			PreparedStatement sstmt = allConn.prepareStatement("INSERT INTO songs(title) SELECT DISTINCT title FROM ms_test_data WHERE NOT EXISTS ( SELECT 1 FROM songs WHERE title = ms_test_data.title)");
-//			int songsCreated = sstmt.executeUpdate();
-
-//			if(songCreated > 0){
-//				update execution_status to 'S created';
-//			}else{
-//				update execution_status to 'S ignored' ;
-//			}
+			
+			PreparedStatement sstmt = allConn.prepareStatement("INSERT INTO songs(title) SELECT DISTINCT title FROM ms_test_data WHERE NOT EXISTS ( SELECT title FROM songs WHERE songs.title = ms_test_data.title)");		
+			int songCreated = sstmt.executeUpdate();			
+	
 			
 /*
 * 
@@ -101,15 +92,38 @@ then it ignores the creation of the entry in "movie_song" table.
 */
 			
 		
-			PreparedStatement msStmt = allConn.prepareStatement("INSERT INTO movie_song (movie_id, song_id) SELECT movies.movie_id, songs.song_id FROM movies, songs WHERE NOT EXISTS (SELECT 1 FROM movie_song WHERE movies.movie_id = movie_song.movie_id and songs.song_id = movie_song.song_id)");
-			int movieSongCreated = msStmt.executeUpdate();
+			PreparedStatement msStmt = allConn.prepareStatement("INSERT INTO movie_song (movie_id, song_id) SELECT movies.movie_id, songs.song_id FROM movies, songs WHERE NOT EXISTS (SELECT 1 FROM movie_song WHERE movies.movie_id = movie_song.movie_id )");
+			int msCreated = msStmt.executeUpdate();
 			
-//			if(msCreated > 0){
-//				update execution_status to 'S created';
-//			}else{
-//				update execution_status to 'S ignored' ;
-//			}
-			
+			if(movieCreated > 1 && songCreated > 1 && msCreated > 1){
+				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Created S Created MS Created' WHERE ID = ms_test_data.ID");
+				movieStatusUpdateM.execute();
+			}else if(movieCreated < 1 && songCreated < 1 && msCreated < 1){
+				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Ignored MS Ignored' WHERE ID = ms_test_data.ID");
+				movieStatusUpdateM.execute();
+			}else if(movieCreated > 1 && songCreated < 1 && msCreated < 1){
+				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Created S Ignored MS Ignored' WHERE ID = ms_test_data.ID");
+				movieStatusUpdateM.execute();
+			}else if(movieCreated < 1 && songCreated > 1 && msCreated < 1){
+				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Created MS Ignored' WHERE ID = ms_test_data.ID");
+				movieStatusUpdateM.execute();
+			}else if(movieCreated < 1 && songCreated < 1 && msCreated > 1){
+				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Ignored MS Created' WHERE ID = ms_test_data.ID");
+				movieStatusUpdateM.execute();
+			}else if(movieCreated > 1 && songCreated > 1 && msCreated < 1){
+				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Created S Created MS Ignored' WHERE ID = ms_test_data.ID");
+				movieStatusUpdateM.execute();
+			}else if(movieCreated > 1 && songCreated < 1 && msCreated > 1){
+				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Created S Ignored MS Created' WHERE ID = ms_test_data.ID");
+				movieStatusUpdateM.execute();
+			}else if(movieCreated < 1 && songCreated > 1 && msCreated > 1){
+				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Created MS Created' WHERE ID = ms_test_data.ID");
+				movieStatusUpdateM.execute();
+			}
+
+		
+				
+				
 /*
  * 
 Case 7:
@@ -127,15 +141,11 @@ Based on the what conditions are met, the "execution_status" will be updated wit
 		catch(Exception ex){
 			ex.printStackTrace();
 		}
-	
-
 	}
-	return true;
-	
-	public static void main(String[] args) {
-		processMovieSong();
 
-	}
+
+
+
 	
 
 
