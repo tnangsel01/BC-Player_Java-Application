@@ -132,7 +132,8 @@ public class MovieDriver {
 				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Created MS Created' WHERE ID = ms_test_data.ID");
 				movieStatusUpdateM.execute();
 			}
-
+		allConn.close();
+		
 		}
 		catch(Exception ex){
 			ex.printStackTrace();
