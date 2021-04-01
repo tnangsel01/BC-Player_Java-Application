@@ -10,114 +10,179 @@ public class MovieDriver {
 		Connection allConn = null;
 		try{ 	
 			allConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/omdb", "root", "");
-
-			/*
-			 * 
-			This method process the data in ms_test_data table in the database.
-			This table contains the following columns.
-			[1] native_name
-			[2] year_made
-			[3] title
-			[4] execution_status
-			 *
-			 */
-
-			/*
-			 * 
-			Case 1: 
-			The movie (native_name and year_made) does not exist in the "movies" table.
-			It creates an entry into "movies" table. 
 			
-			Case 2:
-			The movie (native_name and year_made) exists in "movies" table.
-			It ignores the creation of the movie in "movies" table.
-			 *
-			 */
-			
+			Statement allStmt = allConn.createStatement();
 
-			PreparedStatement mstmt = allConn.prepareStatement("INSERT INTO movies(native_name, year_made) SELECT DISTINCT native_name, year_made FROM ms_test_data WHERE NOT EXISTS (SELECT 1 FROM movies WHERE native_name = ms_test_data.native_name and year_made = ms_test_data.year_made)");		
-			int movieCreated = mstmt.executeUpdate();
+			ResultSet rs = allStmt.executeQuery("SELECT * FROM ms_test_data");
 
-
-			/*
-			 * 
-			Case 3:
-			"title" doesn't exist in the "songs" table.
-			It creates an entry into the "songs" table.
-			
-			Case 4:
-			"title" exist in the "songs" table.
-			It ignore the creation of an entry into "songs" table
-			 *
-			 */
-
-
-			PreparedStatement sstmt = allConn.prepareStatement("INSERT INTO songs(title) SELECT DISTINCT title FROM ms_test_data WHERE NOT EXISTS ( SELECT title FROM songs WHERE songs.title = ms_test_data.title)");		
-			int songCreated = sstmt.executeUpdate();			
-
-
-			/*
-			 * 
-			Case 5:
-			Once the movie and song exist in the respective tables, we also need to create a relationship between those.
-			If the relationship  between the "movie_id" and "song_id" does not exist in "movie_song" table, 
-			then an entry is created in the "movie_song" table.
-			
-			Case 6:
-			If the relationship  between the "movie_id" and "song_id" already exists in "movie_song" table, 
-			then it ignores the creation of the entry in "movie_song" table.
-			 *
-			 */
-
-
-			PreparedStatement msStmt = allConn.prepareStatement("INSERT INTO movie_song (movie_id, song_id) SELECT movies.movie_id, songs.song_id FROM movies, songs WHERE NOT EXISTS (SELECT 1 FROM movie_song WHERE movies.movie_id = movie_song.movie_id )");
-			int msCreated = msStmt.executeUpdate();
-			
-			
-			/*
-			 * 
-			Case 7:
-			Based on the what conditions are met, the "execution_status" will be updated with three of the following entries.
-			[1] M created
-			[2] M ignored
-			[3] S created
-			[4] S ignored
-			[5] MS created
-			[6] MS ignored
-			 *
-			 */
-			 
-
-			if(movieCreated > 1 && songCreated > 1 && msCreated > 1){
-				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Created S Created MS Created' WHERE ID = ms_test_data.ID");
-				movieStatusUpdateM.execute();
-			}else if(movieCreated < 1 && songCreated < 1 && msCreated < 1){
-				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Ignored MS Ignored' WHERE ID = ms_test_data.ID");
-				movieStatusUpdateM.execute();
-			}else if(movieCreated > 1 && songCreated < 1 && msCreated < 1){
-				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Created S Ignored MS Ignored' WHERE ID = ms_test_data.ID");
-				movieStatusUpdateM.execute();
-			}else if(movieCreated < 1 && songCreated > 1 && msCreated < 1){
-				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Created MS Ignored' WHERE ID = ms_test_data.ID");
-				movieStatusUpdateM.execute();
-			}else if(movieCreated < 1 && songCreated < 1 && msCreated > 1){
-				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Ignored MS Created' WHERE ID = ms_test_data.ID");
-				movieStatusUpdateM.execute();
-			}else if(movieCreated > 1 && songCreated > 1 && msCreated < 1){
-				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Created S Created MS Ignored' WHERE ID = ms_test_data.ID");
-				movieStatusUpdateM.execute();
-			}else if(movieCreated > 1 && songCreated < 1 && msCreated > 1){
-				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Created S Ignored MS Created' WHERE ID = ms_test_data.ID");
-				movieStatusUpdateM.execute();
-			}else if(movieCreated < 1 && songCreated > 1 && msCreated > 1){
-				PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Created MS Created' WHERE ID = ms_test_data.ID");
-				movieStatusUpdateM.execute();
+			PreparedStatement pmaxid = allConn.prepareStatement("SELECT max(ID) FROM ms_test_data");
+			ResultSet maxIDrs = pmaxid.executeQuery();
+			int maxID = 0;
+			if( maxIDrs.next()){
+				maxID = maxIDrs.getInt(1);
 			}
+
 			
+			for (int i = 0; i < maxID; i++){
+				
+				rs.next();
+				int movieCreated = 0;
+				int songCreated = 0;
+				int msCreated = 0;
+
+				int currentMovie = 0;
+
+				//Check and Create Movies
+				String nativeNameTD = rs.getString("native_name");
+				int yearMadeTD = rs.getInt("year_made");
 			
-			
-			allConn.close();
+				PreparedStatement ps = allConn.prepareStatement("SELECT * FROM movies WHERE native_name = ? AND year_made = ?");
+				ps.setString(1, nativeNameTD);
+				ps.setInt(2,yearMadeTD);
+
+				ResultSet mrs = ps.executeQuery();
+				mrs.beforeFirst();
+				if (mrs.next() == true)
+				{
+					System.out.println("Movie already exists.");
+					currentMovie += 1;
+				}
+				else
+				{
+					PreparedStatement moviePS = allConn.prepareStatement("INSERT INTO movies (native_name, year_made, english_name) VALUES (?,?,?)");
+					moviePS.setString(1,nativeNameTD);
+					moviePS.setInt(2,yearMadeTD);
+					moviePS.setString(3,nativeNameTD);
+
+					int row = moviePS.executeUpdate();
+					System.out.println("Movie has been added!");
+					movieCreated += 1;
+					currentMovie += 1;
+				}
+
+				//Check and Create Songs
+				String titleTD = rs.getString("title");
+				titleTD = titleTD.replace("\"","");
+				PreparedStatement song_ps = allConn.prepareStatement("SELECT title FROM songs WHERE title = ?");
+				song_ps.setString(1, titleTD);
+
+				ResultSet srs = song_ps.executeQuery();
+				
+				srs.beforeFirst();
+				if (srs.next() == true)
+				{
+					System.out.println("Song already exists.");
+				}
+				else
+				{
+					PreparedStatement songPS = allConn.prepareStatement("INSERT INTO songs (title,theme) VALUES (?,?)");
+					songPS.setString(1,titleTD);
+					songPS.setString(2, "Null");
+
+					int row = songPS.executeUpdate();
+					System.out.println("Song has been added!");
+					songCreated += 1;
+				}
+				
+				//check and create MS
+				PreparedStatement psmovie = allConn.prepareStatement("SELECT * from movies where native_name = ?");
+				psmovie.setString(1, nativeNameTD);
+				ResultSet movieRS = psmovie.executeQuery();
+
+				PreparedStatement pssong = allConn.prepareStatement("SELECT * from songs where title = ?");
+				pssong.setString(1, titleTD);
+				ResultSet songRS = pssong.executeQuery();
+				
+				movieRS.next();
+				songRS.next();
+				int movieID = movieRS.getInt("movie_id");
+				int songID = songRS.getInt("song_id");
+
+				PreparedStatement checkMS = allConn.prepareStatement("SELECT movies.native_name, songs.title FROM movies, songs, ms_test_data WHERE movies.native_name = ms_test_data.native_name and songs.title = ms_test_data.title");
+				ResultSet msExist = checkMS.executeQuery();
+
+				PreparedStatement checkMSTable = allConn.prepareStatement("SELECT * FROM movie_song where movie_id = ? AND song_id = ?");
+				checkMSTable.setInt(1, movieID);
+				checkMSTable.setInt(2, songID);
+				ResultSet msExistTable = checkMSTable.executeQuery();
+				
+				msExistTable.beforeFirst();
+
+				if (msExistTable.next() == true)
+				{
+					System.out.println("Movie and Song already exist in the movie_song table.");
+				}
+				
+				else
+				{
+					String insertMovieSong = "INSERT INTO movie_song(movie_id, song_id) VALUES (?, ?)";
+					PreparedStatement movieSongPS = allConn.prepareStatement(insertMovieSong);
+					movieSongPS.setInt(1, movieID);
+					movieSongPS.setInt(2, songID);
+
+					int row = movieSongPS.executeUpdate();
+					System.out.println("MS created!");
+					msCreated += 1;
+					
+				}
+				
+				System.out.println(movieCreated);
+				System.out.println(songCreated);
+				System.out.println(msCreated);
+
+				if(movieCreated > 0 && songCreated > 0 && msCreated > 0){
+					PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Created S Created MS Created' WHERE title = ?");
+					movieStatusUpdateM.setString(1,titleTD);
+					movieStatusUpdateM.execute();
+				} 
+				else {
+					PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Ignored MS Ignored' WHERE title = ?");
+					movieStatusUpdateM.setString(1,titleTD);
+					movieStatusUpdateM.execute();
+				}
+
+				if (movieCreated > 0 && songCreated == 0 && msCreated == 0){
+					PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Created S Ignored MS Ignored' WHERE title = ?");
+					movieStatusUpdateM.setString(1,titleTD);
+					movieStatusUpdateM.execute();
+				}
+				
+				else if(movieCreated == 0 && songCreated > 0 && msCreated == 0){
+					PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Created MS Ignored' WHERE title = ?");
+					movieStatusUpdateM.setString(1,titleTD);
+					movieStatusUpdateM.execute();
+				}
+
+				else if(movieCreated == 0 && songCreated == 0 && msCreated > 0){
+					PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Ignored MS Created' WHERE title = ?");
+					movieStatusUpdateM.setString(1,titleTD);
+					movieStatusUpdateM.execute();
+				}
+
+				else if(movieCreated > 0 && songCreated > 0 && msCreated == 0){
+					PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Created S Created MS Ignored' WHERE title = ?");
+					movieStatusUpdateM.setString(1,titleTD);
+					movieStatusUpdateM.execute();
+				}
+
+				else if(movieCreated > 0 && songCreated == 0 && msCreated > 0){
+					PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Created S Ignored MS Created' WHERE title = ?");
+					movieStatusUpdateM.setString(1,titleTD);
+					movieStatusUpdateM.execute();
+				}
+
+				else if(movieCreated == 0 && songCreated > 0 && msCreated > 0){
+					PreparedStatement movieStatusUpdateM = allConn.prepareStatement("UPDATE ms_test_data SET execution_status = 'M Ignored S Created MS Created' WHERE title = ?");
+					movieStatusUpdateM.setString(1,titleTD);
+					movieStatusUpdateM.execute();
+				}
+
+				System.out.println("\n");
+			}
+
+		allConn.close();
 		}
+
 		catch(Exception ex){
 			ex.printStackTrace();
 		}
@@ -126,12 +191,4 @@ public class MovieDriver {
 	public static void main(String[] args) {
 		processMovieSongs();
 	}
-
-
-
-
-
-
-
-
 }
