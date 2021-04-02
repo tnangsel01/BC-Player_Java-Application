@@ -384,7 +384,20 @@ public class MovieDriver {
 		return true;
 	}
 	public static void main(String[] args) {
-		processMovieSongs();
-		processMoviePeopleSong();
+		
+		Scanner sc= new Scanner(System.in);  
+                System.out.println("ENTER ONE OF THE FOLLOWING ");
+                System.out.println("1. Iteration 5 ");
+                System.out.println("2. Iteration 6 ");
+                int menu =sc.nextInt();
+                
+                if (menu==1)
+                {
+                    processMovieSongs();
+                }
+                else if(menu==2)
+                {
+                    processMoviePeopleSong();
+                }
 	}
 }
