@@ -219,30 +219,30 @@ public class MovieDriver {
 				//Check and Create Movies
 				String nativeNameTD = rsmps.getString("native_name");
 				int yearMadeTD = rsmps.getInt("year_made");
-//			
-//				PreparedStatement ps = allConn.prepareStatement("SELECT * FROM movies WHERE native_name = ? AND year_made = ?");
-//				ps.setString(1, nativeNameTD);
-//				ps.setInt(2,yearMadeTD);
-//
-//				ResultSet mrs = ps.executeQuery();
-//				//mrs.beforeFirst();
-//				if (mrs.next() == true)
-//				{
-//					System.out.println("Movie already exists.");
-//					currentMovie += 1;
-//				}
-//				else
-//				{
-//					PreparedStatement moviePS = allConn.prepareStatement("INSERT INTO movies (native_name, year_made, english_name) VALUES (?,?,?)");
-//					moviePS.setString(1,nativeNameTD);
-//					moviePS.setInt(2,yearMadeTD);
-//					moviePS.setString(3,nativeNameTD);
-//
-//					int row = moviePS.executeUpdate();
-//					System.out.println("Movie has been added!");
-//					moviecreated += 1;
-//					currentMovie += 1;
-//				}
+			
+				PreparedStatement ps = allConn.prepareStatement("SELECT * FROM movies WHERE native_name = ? AND year_made = ?");
+				ps.setString(1, nativeNameTD);
+				ps.setInt(2,yearMadeTD);
+
+				ResultSet mrs = ps.executeQuery();
+				//mrs.beforeFirst();
+				if (mrs.next() == true)
+				{
+					System.out.println("Movie already exists.");
+					currentMovie += 1;
+				}
+				else
+				{
+					PreparedStatement moviePS = allConn.prepareStatement("INSERT INTO movies (native_name, year_made, english_name) VALUES (?,?,?)");
+					moviePS.setString(1,nativeNameTD);
+					moviePS.setInt(2,yearMadeTD);
+					moviePS.setString(3,nativeNameTD);
+
+					int row = moviePS.executeUpdate();
+					System.out.println("Movie has been added!");
+					moviecreated += 1;
+					currentMovie += 1;
+				}
 
 				//Check and Create People
 				String stagenameTD = rsmps.getString("stage_name");
